@@ -1,7 +1,7 @@
 # Install necessary libraries
-!apt-get install -y poppler-utils
-!apt-get install -y tesseract-ocr
-!pip install pytesseract pdf2image pypdf2 openpyxl Pillow streamlit
+#!apt-get install -y poppler-utils
+#!apt-get install -y tesseract-ocr
+#!pip install pytesseract pdf2image pypdf2 openpyxl Pillow streamlit
 
 # Import libraries
 import streamlit as st
