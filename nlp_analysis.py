@@ -1,5 +1,3 @@
-!pip install streamlit wordcloud matplotlib nltk spacy seaborn textblob
-
 import streamlit as st
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
