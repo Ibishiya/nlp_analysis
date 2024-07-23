@@ -4,6 +4,7 @@ import pytesseract
 import csv
 from PIL import Image
 import io
+import re
 
 # Set up Streamlit app
 st.title("PDF and Image Text Extractor")
@@ -15,6 +16,12 @@ uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
 # Output lists
 csv_output = []
 txt_output = []
+numbers_above_1000 = []
+
+def extract_numbers_above_threshold(text, threshold=1000):
+    """Extract numbers greater than the given threshold from the text."""
+    numbers = re.findall(r'\b\d+\b', text)
+    return [int(num) for num in numbers if int(num) > threshold]
 
 # Process uploaded files
 if uploaded_files:
@@ -38,6 +45,9 @@ if uploaded_files:
 
                 txt_output.append(text)
 
+                # Extract numbers above 1000
+                numbers_above_1000.extend(extract_numbers_above_threshold(text))
+
                 st.success(f"Text from {uploaded_file.name} processed successfully.")
 
             except Exception as e:
@@ -58,6 +68,9 @@ if uploaded_files:
 
                 txt_output.append(text)
 
+                # Extract numbers above 1000
+                numbers_above_1000.extend(extract_numbers_above_threshold(text))
+
                 st.success(f"Text from {uploaded_file.name} processed successfully.")
 
             except Exception as e:
@@ -72,3 +85,6 @@ if uploaded_files:
 
     st.write("Extracted Text (TXT Format):")
     st.write("\n".join(txt_output))
+
+    st.write("Numbers Greater Than 1000:")
+    st.write(numbers_above_1000)
