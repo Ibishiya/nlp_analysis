@@ -83,14 +83,14 @@ if uploaded_files:
             st.warning(f"Skipping file: {uploaded_file.name} (not a PDF or supported image)")
 
     # Display output as text in the app
-    st.write("Extracted Text (CSV Format):")
-    st.write(csv_output)
+    #st.write("Extracted Text (CSV Format):")
+    #st.write(csv_output)
 
-    st.write("Extracted Text (TXT Format):")
-    st.write("\n".join(txt_output))
+    #st.write("Extracted Text (TXT Format):")
+    #st.write("\n".join(txt_output))
 
-    st.write(f"Numbers Greater Than {threshold}:")
-    st.write(numbers_above_threshold)
+    #st.write(f"Numbers Greater Than {threshold}:")
+    #st.write(numbers_above_threshold)
 
     # Save results as TXT
     if st.button('Download TXT Results'):
