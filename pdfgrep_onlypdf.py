@@ -59,10 +59,10 @@ if uploaded_files:
         with open(txt_file_path, 'w') as f:
             f.write(all_results_txt)
         
-        # Save as Excel file
+        # Save as csv file
         df = pd.DataFrame(results)
-        excel_file_path = '/tmp/results.xlsx'
-        df.to_excel(excel_file_path, index=False)
+        csv_file_path = '/tmp/results.csv'
+        df.to_csv(csv_file_path, index=False)
 
         # Provide download buttons
         st.download_button(
@@ -72,9 +72,9 @@ if uploaded_files:
         )
         
         st.download_button(
-            label="Download results as Excel",
-            data=open(excel_file_path, 'rb').read(),
-            file_name='results.xlsx'
+            label="Download results as csv",
+            data=open(csv_file_path_file_path, 'rb').read(),
+            file_name='results.csv'
         )
 
     if results and st.button('Generate EDA Report'):
