@@ -100,6 +100,8 @@ if excel_file:
         df = pd.read_excel(excel_file)
         df['valor inicial'] = pd.to_numeric(df['valor inicial'], errors='coerce')
         df['valor final'] = pd.to_numeric(df['valor final'], errors='coerce')
+        df['fecha inicial'] = df['fecha inicial'].astype(str)
+        df['fecha final'] = df['fecha inicial'].astype(str)
         # Generate Sweetviz report
         st.write("Generating Sweetviz report...")
         report = sv.analyze(df)
