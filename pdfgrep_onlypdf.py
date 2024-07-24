@@ -1,90 +1,142 @@
 import streamlit as st
-import subprocess
-import os
+from pdf2image import convert_from_bytes
+import pytesseract
+import csv
+from PIL import Image
+import io
+import re
 import pandas as pd
 import sweetviz as sv
 
-# Function to run pdfgrep commands with error handling
-def run_pdfgrep(command):
-    try:
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
-        return result.stdout
-    except subprocess.CalledProcessError as e:
-        return f"An error occurred: {e}"
+# Set up Streamlit app
+st.title("PDF and Image Text Extractor")
+st.write("Upload your PDF or image files to extract text.")
 
-# Streamlit UI
-st.title('PDFgrep in Streamlit')
+# File uploader
+uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
 
-uploaded_files = st.file_uploader("Choose PDF files", accept_multiple_files=True)
+# Output lists
+csv_output = []
+txt_output = []
+numbers_above_1000 = []
 
+def extract_numbers_above_threshold(text, threshold=1000):
+    """Extract numbers greater than the given threshold from the text."""
+    numbers = re.findall(r'\b\d+\b', text)
+    return [int(num) for num in numbers if int(num) > threshold]
+
+# Process uploaded files
 if uploaded_files:
-    # Save uploaded files to a writable directory
-    save_path = '/tmp/uploaded_files'
-    os.makedirs(save_path, exist_ok=True)
-    
-    file_paths = []
-    for file in uploaded_files:
-        file_path = os.path.join(save_path, file.name)
-        with open(file_path, 'wb') as f:
-            f.write(file.read())
-        file_paths.append(file_path)
+    for uploaded_file in uploaded_files:
+        file_type = uploaded_file.type
+        
+        if file_type == 'application/pdf':
+            # Handle PDF files
+            try:
+                # Convert PDF to images
+                images = convert_from_bytes(uploaded_file.read(), dpi=300, fmt='jpeg')
 
-    search_term = st.text_input("Search term")
+                # Extract text from images using OCR
+                text = ""
+                for img in images:
+                    text += pytesseract.image_to_string(img)
 
-    if search_term:
-        st.text("Searching files...")
-        results = []
-        for file_path in file_paths:
-            st.write(f"Searching for '{search_term}' in {file_path}")
-            
-            # Search in the file
-            command = f"pdfgrep -H '{search_term}' '{file_path}'"
-            output = run_pdfgrep(command)
-            
-            st.text_area(f"Results for {file_path}", output)
-            
-            # Append results to the list
-            results.append({
-                'file_path': file_path,
-                'search_term': search_term,
-                'output': output
-            })
+                # Append text to output lists
+                for line in text.splitlines():
+                    csv_output.append([line])
 
-    if st.button('Save Results'):
-        st.text("Generating results files...")
-        # Save as text file
-        all_results_txt = "\n".join([f"Results for {result['file_path']}:\n{result['output']}" for result in results])
+                txt_output.append(text)
+
+                # Extract numbers above 1000
+                numbers_above_1000.extend(extract_numbers_above_threshold(text))
+
+                st.success(f"Text from {uploaded_file.name} processed successfully.")
+
+            except Exception as e:
+                st.error(f"Error processing {uploaded_file.name}: {str(e)}")
+
+        elif file_type in ['image/png', 'image/jpeg', 'image/jpg']:
+            # Handle image files
+            try:
+                # Open the image from bytes
+                img = Image.open(uploaded_file)
+
+                # Extract text from the image using OCR
+                text = pytesseract.image_to_string(img)
+
+                # Append text to output lists
+                for line in text.splitlines():
+                    csv_output.append([line])
+
+                txt_output.append(text)
+
+                # Extract numbers above 1000
+                numbers_above_1000.extend(extract_numbers_above_threshold(text))
+
+                st.success(f"Text from {uploaded_file.name} processed successfully.")
+
+            except Exception as e:
+                st.error(f"Error processing {uploaded_file.name}: {str(e)}")
+
+        else:
+            st.warning(f"Skipping file: {uploaded_file.name} (not a PDF or supported image)")
+
+    # Display output as text in the app
+    st.write("Extracted Text (CSV Format):")
+    st.write(csv_output)
+
+    st.write("Extracted Text (TXT Format):")
+    st.write("\n".join(txt_output))
+
+    st.write("Numbers Greater Than 1000:")
+    st.write(numbers_above_1000)
+
+    # Save results as TXT
+    if st.button('Download TXT Results'):
         txt_file_path = '/tmp/results.txt'
         with open(txt_file_path, 'w') as f:
-            f.write(all_results_txt)
-        
-        # Save as CSV file
-        df = pd.DataFrame(results)
-        csv_file_path = '/tmp/results.csv'
-        df.to_csv(csv_file_path, index=False)
-
-        # Provide download buttons
+            f.write("\n".join(txt_output))
         st.download_button(
             label="Download results as TXT",
             data=open(txt_file_path, 'r').read(),
             file_name='results.txt'
         )
-        
+
+    # Save results as CSV
+    if st.button('Download CSV Results'):
+        csv_file_path = '/tmp/results.csv'
+        with open(csv_file_path, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerows(csv_output)
         st.download_button(
             label="Download results as CSV",
             data=open(csv_file_path, 'r').read(),
             file_name='results.csv'
         )
 
-    if results and st.button('Generate EDA Report'):
-        st.text("Generating EDA report...")
-        df = pd.DataFrame(results)
-        eda_report = sv.analyze(df)
-        eda_report_file = '/tmp/eda_report.html'
-        eda_report.show_html(eda_report_file, open_browser=False)
+# Sweetviz analysis section
+st.write("Upload an Excel file to perform Sweetviz EDA:")
+excel_file = st.file_uploader("Choose an Excel file", type=['xls', 'xlsx'])
 
+if excel_file:
+    try:
+        # Load the Excel file into a DataFrame
+        df = pd.read_excel(excel_file)
+        
+        # Generate Sweetviz report
+        st.write("Generating Sweetviz report...")
+        report = sv.analyze(df)
+        eda_report_file = '/tmp/eda_report.html'
+        report.show_html(eda_report_file, open_browser=False)
+
+        st.success("EDA report generated successfully.")
+        
+        # Provide download button for Sweetviz report
         st.download_button(
             label="Download EDA Report",
             data=open(eda_report_file, 'r').read(),
             file_name='eda_report.html'
         )
+
+    except Exception as e:
+        st.error(f"Error generating Sweetviz report: {str(e)}")
