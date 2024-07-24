@@ -17,6 +17,8 @@ st.title('PDFgrep in Streamlit')
 
 uploaded_files = st.file_uploader("Choose PDF files", accept_multiple_files=True)
 
+results = []  # Initialize results outside the conditional block
+
 if uploaded_files:
     # Save uploaded files to a writable directory
     save_path = '/tmp/uploaded_files'
@@ -33,7 +35,6 @@ if uploaded_files:
 
     if search_term:
         st.text("Searching files...")
-        results = []
         for file_path in file_paths:
             st.write(f"Searching for '{search_term}' in {file_path}")
             
