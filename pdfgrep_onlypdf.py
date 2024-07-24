@@ -84,7 +84,7 @@ if uploaded_files:
         eda_report.show_html(eda_report_file, open_browser=False)
 
         st.download_button(
-            label="Download Report",
+            label="Download EDA Report",
             data=open(eda_report_file, 'r').read(),
             file_name='eda_report.html'
         )
