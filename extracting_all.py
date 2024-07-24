@@ -9,8 +9,8 @@ import re
 st.title("PDF and Image Text Extractor")
 st.write("Upload your PDF or image files to extract text.")
 
-logo_path = "path/to/your/logo.png"  # Replace with your logo path
-st.image(logo_path, width=200)  # Adjust width as needed
+#logo_path = "path/to/your/logo.png"  # Replace with your logo path
+#st.image(logo_path, width=200)  # Adjust width as needed
 
 # File uploader
 uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
