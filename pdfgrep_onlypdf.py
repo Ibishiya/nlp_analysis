@@ -99,6 +99,7 @@ if excel_file:
         # Load the Excel file into a DataFrame
         df = pd.read_excel(excel_file)
         df['valor inicial'] = pd.to_numeric(df['valor inicial'], errors='coerce')
+        df['valor final'] = pd.to_numeric(df['valor final'], errors='coerce')
         # Generate Sweetviz report
         st.write("Generating Sweetviz report...")
         report = sv.analyze(df)
