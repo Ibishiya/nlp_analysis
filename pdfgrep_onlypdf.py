@@ -5,8 +5,6 @@ import csv
 from PIL import Image
 import io
 import re
-import pandas as pd
-import sweetviz as sv
 
 # Set up Streamlit app
 st.title("PDF and Image Text Extractor")
@@ -115,29 +113,3 @@ if uploaded_files:
                 data=f.read(),
                 file_name='results.csv'
             )
-
-# Sweetviz analysis section
-st.write("Upload an Excel file to perform Sweetviz EDA:")
-excel_file = st.file_uploader("Choose an Excel file", type=['xls', 'xlsx'])
-
-if excel_file:
-    try:
-        # Load the Excel file into a DataFrame
-        df = pd.read_excel(excel_file)
-        
-        # Generate Sweetviz report
-        st.write("Generating Sweetviz report...")
-        report = sv.analyze(df)
-        eda_report_file = '/tmp/eda_report.html'
-        report.show_html(eda_report_file, open_browser=False)
-        with open(eda_report_file, 'r') as f:
-            st.download_button(
-                label="Download EDA Report",
-                data=f.read(),
-                file_name='eda_report.html'
-            )
-
-        st.success("EDA report generated successfully.")
-        
-    except Exception as e:
-        st.error(f"Error generating Sweetviz report: {str(e)}")
