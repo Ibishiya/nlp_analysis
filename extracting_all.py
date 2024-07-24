@@ -17,22 +17,30 @@ uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
 csv_output = []
 txt_output = []
 numbers_above_threshold = []
-filtered_lines = []
-
-# Number Input for threshold
-threshold = st.number_input("Enter threshold value:", min_value=0, value=1000)
+filtered_lines_with_context = []
 
 # Text Input for search term
 search_term = st.text_input("Enter keyword or phrase to search for:")
+
+# Number Input for threshold
+threshold = st.number_input("Enter threshold value:", min_value=0, value=1000)
 
 def extract_numbers_above_threshold(text, threshold):
     """Extract numbers greater than the given threshold from the text."""
     numbers = re.findall(r'\b\d+\b', text)
     return [int(num) for num in numbers if int(num) > threshold]
 
-def find_lines_containing_search_term(text, search_term):
-    """Find and return lines containing the search term."""
-    return [line for line in text.splitlines() if search_term.lower() in line.lower()]
+def find_lines_with_context(text, search_term, context=1):
+    """Find lines containing the search term and their adjacent lines."""
+    lines = text.splitlines()
+    result = []
+    for i, line in enumerate(lines):
+        if search_term.lower() in line.lower():
+            start = max(i - context, 0)
+            end = min(i + context + 1, len(lines))
+            result.extend(lines[start:end])
+            result.append('---')  # Separator between different occurrences
+    return result
 
 # Process uploaded files
 if uploaded_files:
@@ -59,9 +67,9 @@ if uploaded_files:
                 # Extract numbers above the user-defined threshold
                 numbers_above_threshold.extend(extract_numbers_above_threshold(text, threshold))
 
-                # Find lines containing the search term
+                # Find lines with context if search term is provided
                 if search_term:
-                    filtered_lines.extend(find_lines_containing_search_term(text, search_term))
+                    filtered_lines_with_context.extend(find_lines_with_context(text, search_term))
 
                 st.success(f"Text from {uploaded_file.name} processed successfully.")
 
@@ -86,9 +94,9 @@ if uploaded_files:
                 # Extract numbers above the user-defined threshold
                 numbers_above_threshold.extend(extract_numbers_above_threshold(text, threshold))
 
-                # Find lines containing the search term
+                # Find lines with context if search term is provided
                 if search_term:
-                    filtered_lines.extend(find_lines_containing_search_term(text, search_term))
+                    filtered_lines_with_context.extend(find_lines_with_context(text, search_term))
 
                 st.success(f"Text from {uploaded_file.name} processed successfully.")
 
@@ -135,13 +143,13 @@ if uploaded_files:
             file_name='numbers_above_threshold.csv'
         )
 
-    # Save filtered lines containing the search term as TXT
-    if st.button('Download Filtered Lines'):
-        filtered_lines_file_path = '/tmp/filtered_lines.txt'
+    # Save filtered lines with context as TXT
+    if st.button('Download Filtered Lines With Context'):
+        filtered_lines_file_path = '/tmp/filtered_lines_with_context.txt'
         with open(filtered_lines_file_path, 'w') as f:
-            f.write("\n".join(filtered_lines))
+            f.write("\n".join(filtered_lines_with_context))
         st.download_button(
-            label="Download filtered lines as TXT",
+            label="Download filtered lines with context as TXT",
             data=open(filtered_lines_file_path, 'r').read(),
-            file_name='filtered_lines.txt'
+            file_name='filtered_lines_with_context.txt'
         )
