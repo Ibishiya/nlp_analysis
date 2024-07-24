@@ -4,6 +4,13 @@ import os
 import pandas as pd
 import sweetviz as sv
 
+# Verify and display logo
+logo_path = "/workspaces/nlp_analysis/logo-Vision2.png"  # Using raw string
+try:
+    st.image(logo_path, width=700)  # Adjust width as needed
+except Exception as e:
+    st.error(f"Error loading logo image: {str(e)}")
+    
 # Function to run pdfgrep commands with error handling
 def run_pdfgrep(command):
     try:

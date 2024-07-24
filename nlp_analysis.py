@@ -21,6 +21,14 @@ from textblob import TextBlob
 import spacy
 import nltk
 
+# Verify and display logo
+logo_path = "/workspaces/nlp_analysis/logo-Vision2.png"  # Using raw string
+try:
+    st.image(logo_path, width=700)  # Adjust width as needed
+except Exception as e:
+    st.error(f"Error loading logo image: {str(e)}")
+
+
 # Download NLTK resources (only need to run once)
 nltk.download('punkt')
 nltk.download('stopwords')

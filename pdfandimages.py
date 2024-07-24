@@ -5,6 +5,13 @@ import pytesseract
 import os
 import traceback
 
+# Verify and display logo
+logo_path = "/workspaces/nlp_analysis/logo-Vision2.png"  # Using raw string
+try:
+    st.image(logo_path, width=700)  # Adjust width as needed
+except Exception as e:
+    st.error(f"Error loading logo image: {str(e)}")
+    
 # Function to extract text from PDF
 def extract_text_from_pdf(file_path):
     try:
