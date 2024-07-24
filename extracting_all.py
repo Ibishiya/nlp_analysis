@@ -17,14 +17,22 @@ uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
 csv_output = []
 txt_output = []
 numbers_above_threshold = []
+filtered_lines = []
 
 # Number Input for threshold
 threshold = st.number_input("Enter threshold value:", min_value=0, value=1000)
+
+# Text Input for search term
+search_term = st.text_input("Enter keyword or phrase to search for:")
 
 def extract_numbers_above_threshold(text, threshold):
     """Extract numbers greater than the given threshold from the text."""
     numbers = re.findall(r'\b\d+\b', text)
     return [int(num) for num in numbers if int(num) > threshold]
+
+def find_lines_containing_search_term(text, search_term):
+    """Find and return lines containing the search term."""
+    return [line for line in text.splitlines() if search_term.lower() in line.lower()]
 
 # Process uploaded files
 if uploaded_files:
@@ -51,6 +59,10 @@ if uploaded_files:
                 # Extract numbers above the user-defined threshold
                 numbers_above_threshold.extend(extract_numbers_above_threshold(text, threshold))
 
+                # Find lines containing the search term
+                if search_term:
+                    filtered_lines.extend(find_lines_containing_search_term(text, search_term))
+
                 st.success(f"Text from {uploaded_file.name} processed successfully.")
 
             except Exception as e:
@@ -73,6 +85,10 @@ if uploaded_files:
 
                 # Extract numbers above the user-defined threshold
                 numbers_above_threshold.extend(extract_numbers_above_threshold(text, threshold))
+
+                # Find lines containing the search term
+                if search_term:
+                    filtered_lines.extend(find_lines_containing_search_term(text, search_term))
 
                 st.success(f"Text from {uploaded_file.name} processed successfully.")
 
@@ -117,4 +133,15 @@ if uploaded_files:
             label="Download numbers above threshold as CSV",
             data=open(numbers_csv_file_path, 'r').read(),
             file_name='numbers_above_threshold.csv'
+        )
+
+    # Save filtered lines containing the search term as TXT
+    if st.button('Download Filtered Lines'):
+        filtered_lines_file_path = '/tmp/filtered_lines.txt'
+        with open(filtered_lines_file_path, 'w') as f:
+            f.write("\n".join(filtered_lines))
+        st.download_button(
+            label="Download filtered lines as TXT",
+            data=open(filtered_lines_file_path, 'r').read(),
+            file_name='filtered_lines.txt'
         )
