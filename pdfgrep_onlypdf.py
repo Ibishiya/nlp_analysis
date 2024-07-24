@@ -17,8 +17,6 @@ st.title('PDFgrep in Streamlit')
 
 uploaded_files = st.file_uploader("Choose PDF files", accept_multiple_files=True)
 
-results = []  # Initialize results outside the conditional block
-
 if uploaded_files:
     # Save uploaded files to a writable directory
     save_path = '/tmp/uploaded_files'
@@ -35,6 +33,7 @@ if uploaded_files:
 
     if search_term:
         st.text("Searching files...")
+        results = []
         for file_path in file_paths:
             st.write(f"Searching for '{search_term}' in {file_path}")
             
@@ -59,10 +58,10 @@ if uploaded_files:
         with open(txt_file_path, 'w') as f:
             f.write(all_results_txt)
         
-        # Save as CSV file
+        # Save as Excel file
         df = pd.DataFrame(results)
-        csv_file_path = '/tmp/results.csv'
-        df.to_csv(csv_file_path, index=False)
+        excel_file_path = '/tmp/results.xlsx'
+        df.to_excel(excel_file_path, index=False)
 
         # Provide download buttons
         st.download_button(
@@ -72,20 +71,9 @@ if uploaded_files:
         )
         
         st.download_button(
-            label="Download results as CSV",
-            data=open(csv_file_path, 'rb').read(),
-            file_name='results.csv'
+            label="Download results as Excel",
+            data=open(excel_file_path, 'rb').read(),
+            file_name='results.xlsx'
         )
 
     if results and st.button('Generate EDA Report'):
-        st.text("Generating EDA report...")
-        df = pd.DataFrame(results)
-        eda_report = sv.analyze(df)
-        eda_report_file = '/tmp/eda_report.html'
-        eda_report.show_html(eda_report_file, open_browser=False)
-
-        st.download_button(
-            label="Download EDA Report",
-            data=open(eda_report_file, 'r').read(),
-            file_name='eda_report.html'
-        )
