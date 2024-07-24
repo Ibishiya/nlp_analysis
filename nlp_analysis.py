@@ -100,3 +100,24 @@ if uploaded_file is not None:
     entities = perform_ner(cleaned_text)
     st.subheader("Named Entities")
     st.write(entities)
+
+# Import necessary libraries for topic modeling
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.decomposition import LatentDirichletAllocation
+
+def perform_topic_modeling(text, n_topics=5, n_words=10):
+    vectorizer = CountVectorizer(stop_words='english')
+    X = vectorizer.fit_transform([text])
+    lda = LatentDirichletAllocation(n_components=n_topics, random_state=42)
+    lda.fit(X)
+    words = vectorizer.get_feature_names_out()
+    topics = {}
+    for idx, topic in enumerate(lda.components_):
+        topics[f'Topic {idx+1}'] = [words[i] for i in topic.argsort()[-n_words:]]
+    return topics
+
+# Add to Streamlit app
+if uploaded_file is not None:
+    st.subheader("Topic Modeling")
+    topics = perform_topic_modeling(cleaned_text)
+    st.write(topics)
