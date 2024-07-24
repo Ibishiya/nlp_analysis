@@ -2,6 +2,7 @@ import streamlit as st
 import subprocess
 import os
 import pandas as pd
+import sweetviz as sv
 
 # Function to run pdfgrep commands with error handling
 def run_pdfgrep(command):
@@ -73,4 +74,17 @@ if uploaded_files:
             label="Download results as CSV",
             data=open(csv_file_path, 'r').read(),
             file_name='results.csv'
+        )
+
+    if results and st.button('Generate EDA Report'):
+        st.text("Generating EDA report...")
+        df = pd.DataFrame(results)
+        eda_report = sv.analyze(df)
+        eda_report_file = '/tmp/eda_report.html'
+        eda_report.show_html(eda_report_file, open_browser=False)
+
+        st.download_button(
+            label="Download Report",
+            data=open(eda_report_file, 'r').read(),
+            file_name='eda_report.html'
         )
