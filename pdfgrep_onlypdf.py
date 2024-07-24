@@ -14,6 +14,7 @@ def run_pdfgrep(command):
 
 # Streamlit UI
 st.title('PDFgrep in Streamlit')
+results = []  # Initialize results outside the conditional block
 
 uploaded_files = st.file_uploader("Choose PDF files", accept_multiple_files=True)
 
