@@ -82,16 +82,6 @@ if uploaded_files:
         else:
             st.warning(f"Skipping file: {uploaded_file.name} (not a PDF or supported image)")
 
-    # Display output as text in the app
-    #st.write("Extracted Text (CSV Format):")
-    #st.write(csv_output)
-
-    #st.write("Extracted Text (TXT Format):")
-    #st.write("\n".join(txt_output))
-
-    #st.write(f"Numbers Greater Than {threshold}:")
-    #st.write(numbers_above_threshold)
-
     # Save results as TXT
     if st.button('Download TXT Results'):
         txt_file_path = '/tmp/results.txt'
@@ -113,4 +103,18 @@ if uploaded_files:
             label="Download results as CSV",
             data=open(csv_file_path, 'r').read(),
             file_name='results.csv'
+        )
+
+    # Save numbers above threshold as CSV
+    if st.button('Download Numbers Above Threshold'):
+        numbers_csv_file_path = '/tmp/numbers_above_threshold.csv'
+        with open(numbers_csv_file_path, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Number'])  # Add header
+            for num in numbers_above_threshold:
+                writer.writerow([num])
+        st.download_button(
+            label="Download numbers above threshold as CSV",
+            data=open(numbers_csv_file_path, 'r').read(),
+            file_name='numbers_above_threshold.csv'
         )
