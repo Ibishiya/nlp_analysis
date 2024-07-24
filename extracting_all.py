@@ -10,8 +10,13 @@ import io
 st.title("PDF and Image Text Extractor")
 st.write("Upload your PDF or image files to extract text.")
 
-logo_path = "C:/Users/lenovo/Pictures/Davivienda-1024x597.png"  # Replace with your logo path
-st.image(logo_path, width=200)  # Adjust width as needed
+# Verify and display logo
+logo_path = r"C:\Users\lenovo\Pictures\Davivienda-1024x597.png"  # Using raw string
+
+try:
+    st.image(logo_path, width=200)  # Adjust width as needed
+except Exception as e:
+    st.error(f"Error loading logo image: {str(e)}")
 
 # File uploader
 uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
