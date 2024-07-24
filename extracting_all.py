@@ -7,14 +7,14 @@ import re
 import io
 
 # Verify and display logo
-logo_path = "/workspaces/nlp_analysis/Davivienda-1024x597.webp"  # Using raw string
+logo_path = "/workspaces/nlp_analysis/logo-Vision2.png"  # Using raw string
 
 # Set up Streamlit app
 st.title("PDF and Image Text Extractor")
 st.write("Upload your PDF or image files to extract text.")
 
 try:
-    st.image(logo_path, width=200)  # Adjust width as needed
+    st.image(logo_path, width=500)  # Adjust width as needed
 except Exception as e:
     st.error(f"Error loading logo image: {str(e)}")
 
