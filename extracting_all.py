@@ -6,12 +6,12 @@ from PIL import Image
 import re
 import io
 
+# Verify and display logo
+logo_path = "/workspaces/nlp_analysis/Davivienda-1024x597.webp"  # Using raw string
+
 # Set up Streamlit app
 st.title("PDF and Image Text Extractor")
 st.write("Upload your PDF or image files to extract text.")
-
-# Verify and display logo
-logo_path = r"C:\Users\lenovo\Pictures\Davivienda-1024x597.png"  # Using raw string
 
 try:
     st.image(logo_path, width=200)  # Adjust width as needed
