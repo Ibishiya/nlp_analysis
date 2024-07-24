@@ -16,9 +16,12 @@ uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
 # Output lists
 csv_output = []
 txt_output = []
-numbers_above_1000 = []
+numbers_above_threshold = []
 
-def extract_numbers_above_threshold(text, threshold=1000):
+# Number Input for threshold
+threshold = st.number_input("Enter threshold value:", min_value=0, value=1000)
+
+def extract_numbers_above_threshold(text, threshold):
     """Extract numbers greater than the given threshold from the text."""
     numbers = re.findall(r'\b\d+\b', text)
     return [int(num) for num in numbers if int(num) > threshold]
@@ -45,8 +48,8 @@ if uploaded_files:
 
                 txt_output.append(text)
 
-                # Extract numbers above 1000
-                numbers_above_1000.extend(extract_numbers_above_threshold(text))
+                # Extract numbers above the user-defined threshold
+                numbers_above_threshold.extend(extract_numbers_above_threshold(text, threshold))
 
                 st.success(f"Text from {uploaded_file.name} processed successfully.")
 
@@ -68,8 +71,8 @@ if uploaded_files:
 
                 txt_output.append(text)
 
-                # Extract numbers above 1000
-                numbers_above_1000.extend(extract_numbers_above_threshold(text))
+                # Extract numbers above the user-defined threshold
+                numbers_above_threshold.extend(extract_numbers_above_threshold(text, threshold))
 
                 st.success(f"Text from {uploaded_file.name} processed successfully.")
 
@@ -86,5 +89,28 @@ if uploaded_files:
     st.write("Extracted Text (TXT Format):")
     st.write("\n".join(txt_output))
 
-    st.write("Numbers Greater Than 1000:")
-    st.write(numbers_above_1000)
+    st.write(f"Numbers Greater Than {threshold}:")
+    st.write(numbers_above_threshold)
+
+    # Save results as TXT
+    if st.button('Download TXT Results'):
+        txt_file_path = '/tmp/results.txt'
+        with open(txt_file_path, 'w') as f:
+            f.write("\n".join(txt_output))
+        st.download_button(
+            label="Download results as TXT",
+            data=open(txt_file_path, 'r').read(),
+            file_name='results.txt'
+        )
+
+    # Save results as CSV
+    if st.button('Download CSV Results'):
+        csv_file_path = '/tmp/results.csv'
+        with open(csv_file_path, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerows(csv_output)
+        st.download_button(
+            label="Download results as CSV",
+            data=open(csv_file_path, 'r').read(),
+            file_name='results.csv'
+        )
