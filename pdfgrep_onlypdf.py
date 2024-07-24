@@ -77,4 +77,14 @@ if uploaded_files:
         )
 
     if results and st.button('Generate EDA Report'):
-    
+        st.text("Generating EDA report...")
+        df = pd.DataFrame(results)
+        eda_report = sv.analyze(df)
+        eda_report_file = '/tmp/eda_report.html'
+        eda_report.show_html(eda_report_file, open_browser=False)
+
+        st.download_button(
+            label="Download EDA Report",
+            data=open(eda_report_file, 'r').read(),
+            file_name='eda_report.html'
+        )
