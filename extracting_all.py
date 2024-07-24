@@ -14,7 +14,7 @@ st.title("PDF and Image Text Extractor")
 st.write("Upload your PDF or image files to extract text.")
 
 try:
-    st.image(logo_path, width=500)  # Adjust width as needed
+    st.image(logo_path, width=600)  # Adjust width as needed
 except Exception as e:
     st.error(f"Error loading logo image: {str(e)}")
 
