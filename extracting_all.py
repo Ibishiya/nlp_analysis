@@ -3,7 +3,6 @@ from pdf2image import convert_from_bytes
 import pytesseract
 import csv
 from PIL import Image
-import io
 import re
 
 # Set up Streamlit app
@@ -18,6 +17,7 @@ csv_output = []
 txt_output = []
 numbers_above_threshold = []
 filtered_lines_with_context = []
+filtered_lines_above_threshold = []
 
 # Text Input for search term
 search_term = st.text_input("Enter keyword or phrase to search for:")
@@ -41,6 +41,14 @@ def find_lines_with_context(text, search_term, context=1):
             result.extend(lines[start:end])
             result.append('---')  # Separator between different occurrences
     return result
+
+def extract_numbers_from_lines(lines, threshold):
+    """Extract numbers greater than the given threshold from the list of lines."""
+    filtered_lines = []
+    for line in lines:
+        if any(int(num) > threshold for num in re.findall(r'\b\d+\b', line)):
+            filtered_lines.append(line)
+    return filtered_lines
 
 # Process uploaded files
 if uploaded_files:
@@ -71,6 +79,9 @@ if uploaded_files:
                 if search_term:
                     filtered_lines_with_context.extend(find_lines_with_context(text, search_term))
 
+                    # Filter lines with context based on threshold
+                    filtered_lines_above_threshold.extend(extract_numbers_from_lines(filtered_lines_with_context, threshold))
+
                 st.success(f"Text from {uploaded_file.name} processed successfully.")
 
             except Exception as e:
@@ -97,6 +108,9 @@ if uploaded_files:
                 # Find lines with context if search term is provided
                 if search_term:
                     filtered_lines_with_context.extend(find_lines_with_context(text, search_term))
+
+                    # Filter lines with context based on threshold
+                    filtered_lines_above_threshold.extend(extract_numbers_from_lines(filtered_lines_with_context, threshold))
 
                 st.success(f"Text from {uploaded_file.name} processed successfully.")
 
@@ -152,4 +166,15 @@ if uploaded_files:
             label="Download filtered lines with context as TXT",
             data=open(filtered_lines_file_path, 'r').read(),
             file_name='filtered_lines_with_context.txt'
+        )
+
+    # Save filtered lines above threshold as TXT
+    if st.button('Download Filtered Lines Above Threshold'):
+        filtered_lines_above_threshold_file_path = '/tmp/filtered_lines_above_threshold.txt'
+        with open(filtered_lines_above_threshold_file_path, 'w') as f:
+            f.write("\n".join(filtered_lines_above_threshold))
+        st.download_button(
+            label="Download filtered lines above threshold as TXT",
+            data=open(filtered_lines_above_threshold_file_path, 'r').read(),
+            file_name='filtered_lines_above_threshold.txt'
         )
