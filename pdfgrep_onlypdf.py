@@ -89,3 +89,30 @@ if uploaded_files:
             data=open(eda_report_file, 'r').read(),
             file_name='eda_report.html'
         )
+
+# Sweetviz analysis section
+st.write("Upload an Excel file to perform Sweetviz EDA:")
+excel_file = st.file_uploader("Choose an Excel file", type=['xls', 'xlsx'])
+
+if excel_file:
+    try:
+        # Load the Excel file into a DataFrame
+        df = pd.read_excel(excel_file)
+        
+        # Generate Sweetviz report
+        st.write("Generating Sweetviz report...")
+        report = sv.analyze(df)
+        eda_report_file = '/tmp/eda_report.html'
+        report.show_html(eda_report_file, open_browser=False)
+
+        st.success("EDA report generated successfully.")
+        
+        # Provide download button for Sweetviz report
+        st.download_button(
+            label="Download EDA Report",
+            data=open(eda_report_file, 'r').read(),
+            file_name='eda_report.html'
+        )
+
+    except Exception as e:
+        st.error(f"Error generating Sweetviz report: {str(e)}")
