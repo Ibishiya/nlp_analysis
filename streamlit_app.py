@@ -1,109 +1,161 @@
 import streamlit as st
-import fitz  # PyMuPDF
-from PIL import Image
+from pdf2image import convert_from_bytes
 import pytesseract
-import os
-import traceback
+import csv
+from PIL import Image
+import re
+import io
 
 # Verify and display logo
 logo_path = "./logo-Vision2.png"  # Using raw string
+
+# Set up Streamlit app
+st.title("PDF and Image Text Extractor")
+st.write("Upload your PDF or image files to extract text.")
+
 try:
     st.image(logo_path, width=700)  # Adjust width as needed
 except Exception as e:
     st.error(f"Error loading logo image: {str(e)}")
-    
-# Function to extract text from PDF
-def extract_text_from_pdf(file_path):
-    try:
-        doc = fitz.open(file_path)
-        text = ""
-        for page_num in range(len(doc)):
-            page = doc.load_page(page_num)
-            text += page.get_text()
-        return text
-    except Exception as e:
-        return f"Failed to extract text from PDF: {str(e)}"
 
-# Function to extract text from image
-def extract_text_from_image(file_path):
-    try:
-        image = Image.open(file_path)
-        text = pytesseract.image_to_string(image)
-        return text
-    except Exception as e:
-        return f"Failed to extract text from image: {str(e)}"
+# File uploader
+uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
 
-# Streamlit UI
-st.title('PDF and Image Text Extraction in Streamlit')
+# Output lists
+csv_output = []
+txt_output = []
+numbers_above_threshold = []
+filtered_lines_with_context = []
+filtered_lines_above_threshold = []
 
-uploaded_files = st.file_uploader("Choose PDF or Image files", accept_multiple_files=True, type=['pdf', 'jpg', 'jpeg', 'png'])
+# Text Input for search term
+search_term = st.text_input("Enter keyword or phrase to search for:")
 
+# Number Input for threshold
+threshold = st.number_input("Enter threshold value:", min_value=0, value=1000)
+
+def extract_numbers_above_threshold(text, threshold):
+    """Extract numbers greater than the given threshold from the text."""
+    numbers = re.findall(r'\b\d+\b', text)
+    return [int(num) for num in numbers if int(num) > threshold]
+
+def find_lines_with_context(text, search_term, context=1):
+    """Find lines containing the search term and their adjacent lines."""
+    lines = text.splitlines()
+    result = []
+    for i, line in enumerate(lines):
+        if search_term.lower() in line.lower():
+            start = max(i - context, 0)
+            end = min(i + context + 1, len(lines))
+            result.extend(lines[start:end])
+            result.append('---')  # Separator between different occurrences
+    return result
+
+def extract_numbers_from_lines(lines, threshold):
+    """Extract numbers greater than the given threshold from the list of lines."""
+    filtered_lines = []
+    for line in lines:
+        if any(int(num) > threshold for num in re.findall(r'\b\d+\b', line)):
+            filtered_lines.append(line)
+    return filtered_lines
+
+# Process uploaded files
 if uploaded_files:
-    try:
-        save_path = '/tmp/uploaded_files'
-        os.makedirs(save_path, exist_ok=True)
-    except Exception as e:
-        st.error(f"Failed to create save directory: {str(e)}")
-
-    file_paths = []
-    for file in uploaded_files:
+    for uploaded_file in uploaded_files:
+        file_type = uploaded_file.type
+        
         try:
-            file_path = os.path.join(save_path, file.name)
-            with open(file_path, 'wb') as f:
-                f.write(file.read())
-            file_paths.append(file_path)
+            if file_type == 'application/pdf':
+                # Convert PDF to images
+                images = convert_from_bytes(uploaded_file.read(), dpi=300, fmt='jpeg')
+
+                # Extract text from images using OCR
+                text = "".join(pytesseract.image_to_string(img) for img in images)
+
+            elif file_type in ['image/png', 'image/jpeg', 'image/jpg']:
+                # Open the image from bytes
+                img = Image.open(uploaded_file)
+
+                # Extract text from the image using OCR
+                text = pytesseract.image_to_string(img)
+
+            else:
+                st.warning(f"Skipping file: {uploaded_file.name} (not a PDF or supported image)")
+                continue
+
+            # Append text to output lists
+            for line in text.splitlines():
+                csv_output.append([line])
+
+            txt_output.append(text)
+
+            # Extract numbers above the user-defined threshold
+            numbers_above_threshold.extend(extract_numbers_above_threshold(text, threshold))
+
+            # Find lines with context if search term is provided
+            if search_term:
+                filtered_lines_with_context.extend(find_lines_with_context(text, search_term))
+
+                # Filter lines with context based on threshold
+                filtered_lines_above_threshold.extend(extract_numbers_from_lines(filtered_lines_with_context, threshold))
+
+            st.success(f"Text from {uploaded_file.name} processed successfully.")
+
         except Exception as e:
-            st.error(f"Failed to save file {file.name}: {str(e)}")
+            st.error(f"Error processing {uploaded_file.name}: {str(e)}")
 
-    search_term = st.text_input("Search term")
+    # Save results as TXT
+    if st.button('Download TXT Results'):
+        txt_data = "\n".join(txt_output)
+        st.download_button(
+            label="Download results as TXT",
+            data=txt_data,
+            file_name='results.txt',
+            mime='text/plain'
+        )
 
-    if search_term:
-        st.text("Processing files...")
-        for file_path in file_paths:
-            try:
-                ext = os.path.splitext(file_path)[1].lower()
-                if ext in ['.pdf']:
-                    st.write(f"Searching for '{search_term}' in PDF: {file_path}")
-                    text = extract_text_from_pdf(file_path)
-                elif ext in ['.jpg', '.jpeg', '.png']:
-                    st.write(f"Searching for '{search_term}' in Image: {file_path}")
-                    text = extract_text_from_image(file_path)
-                else:
-                    st.write(f"Unsupported file type: {file_path}")
-                    text = ""
-                
-                # Search in the extracted text
-                search_results = [line for line in text.split('\n') if search_term.lower() in line.lower()]
-                result_text = "\n".join(search_results) if search_results else "No matches found."
-                st.text_area(f"Results for {file_path}", result_text)
-            except Exception as e:
-                st.error(f"Failed to process file {file_path}: {str(e)}")
+    # Save results as CSV
+    if st.button('Download CSV Results'):
+        csv_data = io.StringIO()
+        writer = csv.writer(csv_data)
+        writer.writerows(csv_output)
+        st.download_button(
+            label="Download results as CSV",
+            data=csv_data.getvalue(),
+            file_name='results.csv',
+            mime='text/csv'
+        )
 
-    if st.button('Save Results'):
-        try:
-            st.text("Generating results file...")
-            all_results = ""
-            for file_path in file_paths:
-                ext = os.path.splitext(file_path)[1].lower()
-                if ext in ['.pdf']:
-                    text = extract_text_from_pdf(file_path)
-                elif ext in ['.jpg', '.jpeg', '.png']:
-                    text = extract_text_from_image(file_path)
-                else:
-                    text = ""
-                
-                search_results = [line for line in text.split('\n') if search_term.lower() in line.lower()]
-                result_text = "\n".join(search_results) if search_results else "No matches found."
-                
-                all_results += f"\nResults for {file_path}:\n{result_text}"
-            
-            with open('results.txt', 'w') as f:
-                f.write(all_results)
-            
-            st.download_button(
-                label="Download results",
-                data=open('results.txt', 'r').read(),
-                file_name='results.txt'
-            )
-        except Exception as e:
-            st.error(f"Failed to save results: {str(e)}")
+    # Save numbers above threshold as CSV
+    if st.button('Download Numbers Above Threshold'):
+        numbers_csv_data = io.StringIO()
+        writer = csv.writer(numbers_csv_data)
+        writer.writerow(['Number'])  # Add header
+        for num in numbers_above_threshold:
+            writer.writerow([num])
+        st.download_button(
+            label="Download numbers above threshold as CSV",
+            data=numbers_csv_data.getvalue(),
+            file_name='numbers_above_threshold.csv',
+            mime='text/csv'
+        )
+
+    # Save filtered lines with context as TXT
+    if st.button('Download Filtered Lines With Context'):
+        filtered_lines_data = "\n".join(filtered_lines_with_context)
+        st.download_button(
+            label="Download filtered lines with context as TXT",
+            data=filtered_lines_data,
+            file_name='filtered_lines_with_context.txt',
+            mime='text/plain'
+        )
+
+    # Save filtered lines above threshold as TXT
+    if st.button('Download Filtered Lines Above Threshold'):
+        filtered_lines_above_threshold_data = "\n".join(filtered_lines_above_threshold)
+        st.download_button(
+            label="Download filtered lines above threshold as TXT",
+            data=filtered_lines_above_threshold_data,
+            file_name='filtered_lines_above_threshold.txt',
+            mime='text/plain'
+        )
