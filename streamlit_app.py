@@ -6,7 +6,7 @@ import os
 import traceback
 
 # Verify and display logo
-logo_path = "/workspaces/nlp_analysis/logo-Vision2.png"  # Using raw string
+logo_path = "./nlp_analysis/logo-Vision2.png"  # Using raw string
 try:
     st.image(logo_path, width=700)  # Adjust width as needed
 except Exception as e:
